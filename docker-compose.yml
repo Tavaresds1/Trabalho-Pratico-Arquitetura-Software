@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # ── Banco de dados exclusivo do Microsserviço de Alunos ──────────────────────
+  postgres-alunos:
+    image: postgres:16-alpine
+    container_name: postgres-alunos
+    environment:
+      POSTGRES_DB: alunos_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-alunos-data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d alunos_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Banco de dados exclusivo do Microsserviço de Cursos ──────────────────────
+  postgres-cursos:
+    image: postgres:16-alpine
+    container_name: postgres-cursos
+    environment:
+      POSTGRES_DB: cursos_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-cursos-data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cursos_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── pgAdmin: interface gráfica para ambos os bancos ──────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres-alunos:
+        condition: service_healthy
+      postgres-cursos:
+        condition: service_healthy
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  # ── Microsservico de Alunos ───────────────────────────────────────────────────
+  ms-alunos:
+    build: ./backend/ms-alunos
+    container_name: ms-alunos
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DB_HOST: postgres-alunos
+      DB_PORT: 5432
+      DB_NAME: alunos_db
+      DB_USER: postgres
+      DB_PASS: postgres
+    depends_on:
+      postgres-alunos:
+        condition: service_healthy
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  # ── Microsservico de Cursos ───────────────────────────────────────────────────
+  ms-cursos:
+    build: ./backend/ms-cursos
+    container_name: ms-cursos
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      DB_HOST: postgres-cursos
+      DB_PORT: 5432
+      DB_NAME: cursos_db
+      DB_USER: postgres
+      DB_PASS: postgres
+    depends_on:
+      postgres-cursos:
+        condition: service_healthy
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  # ── API Gateway: unico ponto de entrada da aplicacao ─────────────────────────
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      ALUNOS_SERVICE_URL: http://ms-alunos:3001
+      CURSOS_SERVICE_URL: http://ms-cursos:3002
+    depends_on:
+      - ms-alunos
+      - ms-cursos
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  postgres-alunos-data:
+  postgres-cursos-data:
+  pgadmin-data:

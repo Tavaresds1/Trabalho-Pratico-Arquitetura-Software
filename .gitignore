@@ -1,0 +1,18 @@
+# Dependências — nunca versionar
+node_modules/
+
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build do front-end
+frontend/dist/
+frontend/.vite/
+
+# Dados persistidos localmente pelo Docker
+pgadmin/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

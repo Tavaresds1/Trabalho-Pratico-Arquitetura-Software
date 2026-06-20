@@ -1,0 +1,19 @@
+{
+  "name": "ms-cursos",
+  "version": "1.0.0",
+  "description": "Microsservico independente de gerenciamento de Cursos",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "sequelize": "^6.37.3",
+    "pg": "^8.12.0",
+    "pg-hstore": "^2.3.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
