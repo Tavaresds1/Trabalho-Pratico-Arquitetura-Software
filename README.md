@@ -1,4 +1,4 @@
-# Sistema Acadêmico — Arquitetura de Microsserviços
+# Trabalho Pratico — Arquitetura de Microsserviços
 
 Projeto acadêmico que demonstra uma arquitetura de microsserviços completa com API Gateway, dois serviços independentes, bancos de dados isolados e front-end React.
 
